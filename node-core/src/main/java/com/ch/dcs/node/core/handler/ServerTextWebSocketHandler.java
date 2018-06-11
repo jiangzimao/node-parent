@@ -1,8 +1,8 @@
 package com.ch.dcs.node.core.handler;
 
 import com.ch.dcs.node.core.context.WebSocketContext;
+import com.ch.dcs.node.core.message.Message;
 import com.ch.dcs.node.core.message.MessageType;
-import com.ch.dcs.node.core.message.RequestMessage;
 import com.ch.dcs.node.core.utils.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,19 +21,11 @@ public class ServerTextWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    public void handleTextMessage(WebSocketSession session, TextMessage message) {
-        RequestMessage requestMessage = JsonUtil.toObject(message.getPayload(), RequestMessage.class);
-        MessageType type = requestMessage.getMessageType();
+    public void handleTextMessage(WebSocketSession session, TextMessage textMessage) {
+        Message message = JsonUtil.toObject(textMessage.getPayload(), Message.class);
+        MessageType type = message.getMessageType();
         ITextMessageHandle messageHandle = WebSocketContext.getMessageHandle(type);
-        messageHandle.handleTextMessage(session, requestMessage);
-    }
-
-    /**
-     * 发送信息给指定用户
-     */
-    public boolean sendMessageToUser(Integer clientId, TextMessage message) {
-        // TODO
-        return true;
+        messageHandle.handleTextMessage(session, message);
     }
 
 
@@ -43,7 +35,7 @@ public class ServerTextWebSocketHandler extends TextWebSocketHandler {
         if (session.isOpen()) {
             session.close();
         }
-        System.out.println("连接出错");
+        LOG.error("连接出错");
     }
 
 
@@ -51,7 +43,7 @@ public class ServerTextWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         // TODO
-        System.out.println("连接已关闭：" + status);
+        LOG.info("连接已关闭：" + status);
     }
 
     @Override

@@ -6,18 +6,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
 
-public class InputMessageHandle extends AbstractMessageHandle {
+public class ChatMessageHandle extends AbstractMessageHandle {
 
-    private static final Logger LOG = LoggerFactory.getLogger(InputMessageHandle.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ChatMessageHandle.class);
 
     @Override
     protected void handle(WebSocketSession session, Message message) {
         // 推送消息到浏览器
-        Integer sourceId = message.getSourceId();
-        if(sourceId != null) {
-            MessageSender.send(sourceId, message);
+        Integer targetId = message.getTargetId();
+        if(targetId != null) {
+            MessageSender.send(targetId, message);
         } else {
-            LOG.error("the sourceId of message is null.");
+            LOG.error("the targetId of message is null.");
         }
     }
 }

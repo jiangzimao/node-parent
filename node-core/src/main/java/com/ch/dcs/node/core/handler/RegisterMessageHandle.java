@@ -1,13 +1,12 @@
 package com.ch.dcs.node.core.handler;
 
-import com.ch.dcs.node.core.context.Session;
-import com.ch.dcs.node.core.utils.JsonUtil;
+import com.ch.dcs.node.core.context.MessageSender;
+import com.ch.dcs.node.core.context.SocketSession;
+import com.ch.dcs.node.core.message.Message;
 import com.ch.dcs.node.core.context.WebSocketContext;
 import com.ch.dcs.node.core.message.MessageType;
-import com.ch.dcs.node.core.message.RequestMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.HashMap;
@@ -18,26 +17,26 @@ public class RegisterMessageHandle implements ITextMessageHandle {
     private static final Logger LOG = LoggerFactory.getLogger(RegisterMessageHandle.class);
 
     @Override
-    public void handleTextMessage(WebSocketSession webSocketSession, RequestMessage requestMessage) {
-        Integer clientId = requestMessage.getClientId();
-        if(clientId == null) {
-            clientId = WebSocketContext.getServerId();
+    public void handleTextMessage(WebSocketSession webSocketSession, Message message) {
+        Integer sourceId = message.getSourceId();
+        if(sourceId == null) {
+            sourceId = WebSocketContext.getServerId();
         }
-        if(WebSocketContext.hasSession(clientId)) {
-            Session oldSession = WebSocketContext.getSession(clientId);
-            if(oldSession != null) {
-                oldSession.close();
+        if(WebSocketContext.hasSession(sourceId)) {
+            SocketSession oldSocketSession = WebSocketContext.getSession(sourceId);
+            if(oldSocketSession != null) {
+                oldSocketSession.close();
             }
         }
-        Session session = new Session(clientId, webSocketSession);
-        WebSocketContext.putSession(clientId, session);
+        SocketSession socketSession = new SocketSession(sourceId, webSocketSession);
+        WebSocketContext.putSession(sourceId, socketSession);
         Map<String, Object> result = new HashMap<>();
         result.put("status", Boolean.TRUE);
         result.put("serverId", WebSocketContext.getServerId());
-        result.put("clientId", clientId);
-        RequestMessage req = new RequestMessage(MessageType.REGISTER);
-        req.setData(JsonUtil.toString(result));
-        session.sendMessage(new TextMessage(JsonUtil.toString(req)));
-        LOG.info(String.format("Client[clientId=%s] registration successful.", clientId));
+        result.put("sourceId", sourceId);
+        Message<Map<String, Object>> req = new Message<>(MessageType.REGISTER);
+        req.setData(result);
+        MessageSender.send(sourceId, req);
+        LOG.info(String.format("Client[%s] registration successful.", sourceId));
     }
 }

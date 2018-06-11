@@ -2,48 +2,66 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <script type="application/javascript">
-        console.log('start test.');
-        window.app = {};
-        const socketClient = new WebSocket('ws://localhost:8081/node/webSocket');
-        socketClient.onopen = function () {
-            const req = { messageType: 'REGISTER', data: 'register'};
-            socketClient.send(JSON.stringify(req));
-            console.info('send register info.')
-        };
-        socketClient.onmessage = function (msg, fun) {
-            const data = msg.data;
-            if(data !== null && data !== undefined) {
-                const message = JSON.parse(data);
-                const { messageType, clientId, status } = message;
-                if(messageType !== null && messageType !== undefined && messageType === 'REGISTER') {
-                    if(status) {
-                        window.socketClientId = clientId;
-                        console.info(`Client registration is successful, clientId is ${window.socketClientId}.`)
-                    } else {
-                        console.error('Client registration failure.')
-                    }
-                    document.getElementById('main').src = 'http://localhost:8080/client.html';
-                    return;
+</head>
+<body>
+<form>
+    <label for="input_key">输入框</label><br />
+    <input type="text" id="input_key"/><br />
+    <label for="textarea_key">多行输入框</label><br />
+    <textarea id="textarea_key"></textarea><br />
+    <div id="show_div"></div>
+</form>
+<script type="application/javascript">
+    function getQueryString(key) {
+        let qs = location.search.substr(1), // 获取url中"?"符后的字串
+            args = {}, // 保存参数数据的对象
+            items = qs.length ? qs.split("&") : [], // 取得每一个参数项,
+            item = null,
+            len = items.length;
+
+        for(let i = 0; i < len; i++) {
+            item = items[i].split("=");
+            let name = decodeURIComponent(item[0]),
+                value = decodeURIComponent(item[1]);
+            if(name) {
+                args[name] = value;
+            }
+        }
+        return args[key];
+    }
+
+    console.log('start test. ');
+    window.app = {};
+    const socketClient = new WebSocket(getQueryString('_web_socket_rui'));
+    socketClient.onopen = function () {
+        const req = { messageType: 'REGISTER', data: 'register'};
+        socketClient.send(JSON.stringify(req));
+        console.info('send register info.');
+    };
+    socketClient.onmessage = function (msg) {
+        const data = msg.data;
+        if(data !== null && data !== undefined) {
+            const message = JSON.parse(data);
+            const { messageType } = message;
+            if(messageType !== null && messageType !== undefined && messageType === 'REGISTER') {
+                const { sourceId, status } = JSON.parse(message.data);
+                if(status) {
+                    window.socketClientId = sourceId;
+                    console.info(`Client registration is successful, sourceId is ${window.socketClientId}.`)
+                } else {
+                    console.error('Client registration failure.')
                 }
             }
-            console.info(msg.data);
-            if(fun !== null && fun !== undefined) {
-                fun(msg.data);
-            }
-        };
-        socketClient.onclose = function (fun) {
-            if(fun !== null && fun !== undefined) {
-                fun();
-            }
-        };
-        socketClient.onerror = function(err){
-            console.error(err);
-        };
-        document.getElementById('main').src = 'http://localhost:8080/client.html';
-    </script>
-</head>
-<body style="padding: 0; width: auto; height: auto;">
-<iframe id="main" style="border: 0"></iframe>
+        }
+        document.getElementById('show_div').innerHTML = msg.data;
+        console.info(msg.data);
+    };
+    socketClient.onclose = function () {
+
+    };
+    socketClient.onerror = function(err){
+        console.error(err);
+    };
+</script>
 </body>
 </html>

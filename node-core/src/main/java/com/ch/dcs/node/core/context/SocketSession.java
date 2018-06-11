@@ -5,19 +5,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-public class Session {
+public class SocketSession {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Session.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SocketSession.class);
 
     private Integer id;
 
     private WebSocketSession webSocketSession;
 
-    private Session () {
+    private SocketSession() {
 
     }
 
-    public Session(Integer id, WebSocketSession webSocketSession) {
+    public SocketSession(Integer id, WebSocketSession webSocketSession) {
         this();
         this.id = id;
         this.webSocketSession = webSocketSession;
@@ -45,5 +45,9 @@ public class Session {
 
     public Integer getId() {
         return this.id;
+    }
+
+    public boolean isOpen() {
+        return webSocketSession.isOpen();
     }
 }

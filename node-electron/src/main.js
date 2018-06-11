@@ -1,9 +1,9 @@
-const { app, session, BrowserWindow } = require('electron');
+const { app, session, Menu, BrowserWindow } = require('electron');
 
 let win;
 let windowConfig = {
-    width: 800,
-    height: 600,
+    width: 1024,
+    height: 768,
 };
 let socketClient;
 
@@ -14,7 +14,8 @@ function createWindow() {
 
     // 打开客户端窗口
     win = new BrowserWindow(windowConfig);
-    win.loadURL(`file://${__dirname}/../dist/index.html`);
+    // win.loadURL(`file://${__dirname}/../dist/index.html?_web_socket_rui=ws://localhost:8082/node/webSocket`);
+    win.loadURL(`http://192.168.9.76:3000/?_web_socket_uri=ws://localhost:8081/node/webSocket`);
     //开启调试工具
     win.webContents.openDevTools();
     win.on('close', () => {
@@ -24,6 +25,7 @@ function createWindow() {
     win.on('resize', () => {
         win.reload();
     });
+    Menu.setApplicationMenu(null);
 }
 
 app.on('ready', createWindow);
