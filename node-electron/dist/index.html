@@ -2,44 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>WebSocketClient</title>
+    <script type="application/javascript">
+        console.log('start test.');
+        window.app = {};
+        const socketClient = new WebSocket('ws://localhost:8081/node/webSocket');
+        socketClient.onopen = function () {
+            const req = { messageType: 'REGISTER', data: 'register'};
+            socketClient.send(JSON.stringify(req));
+            console.info('send register info.')
+        };
+        socketClient.onmessage = function (msg, fun) {
+            const data = msg.data;
+            if(data !== null && data !== undefined) {
+                const message = JSON.parse(data);
+                const { messageType, clientId, status } = message;
+                if(messageType !== null && messageType !== undefined && messageType === 'REGISTER') {
+                    if(status) {
+                        window.socketClientId = clientId;
+                        console.info(`Client registration is successful, clientId is ${window.socketClientId}.`)
+                    } else {
+                        console.error('Client registration failure.')
+                    }
+                    document.getElementById('main').src = 'http://localhost:8080/client.html';
+                    return;
+                }
+            }
+            console.info(msg.data);
+            if(fun !== null && fun !== undefined) {
+                fun(msg.data);
+            }
+        };
+        socketClient.onclose = function (fun) {
+            if(fun !== null && fun !== undefined) {
+                fun();
+            }
+        };
+        socketClient.onerror = function(err){
+            console.error(err);
+        };
+        document.getElementById('main').src = 'http://localhost:8080/client.html';
+    </script>
 </head>
-<body>
-<h1>这是测试页面</h1>
-<script type="application/javascript">
-    console.log('start test.');
-
-    // 仅限 Windows 系统
-    /*
-    const { spawn } = require('child_process');
-    const bat = spawn('cmd.exe', ['/c', 'ping www.baidu.com']);
-
-    bat.stdout.on('data', (data) => {
-        console.log(data.toString());
-    });
-
-    bat.stderr.on('data', (data) => {
-        console.log(data.toString());
-    });
-
-    bat.on('exit', (code) => {
-        console.log(`子进程退出码：${code}`);
-    });
-    */
-
-    const ws = new WebSocket("ws://localhost:8080/webSocket");
-    ws.onopen = function () {
-        console.log("onpen");
-        ws.send("{这是发送的消息}");
-    };
-    ws.onclose = function () {
-        console.log("onclose");
-    };
-
-    ws.onmessage = function (msg) {
-        console.log(msg.data);
-    };
-</script>
-<h1>这是测试页面</h1>
+<body style="padding: 0; width: auto; height: auto;">
+<iframe id="main" style="border: 0"></iframe>
 </body>
 </html>
