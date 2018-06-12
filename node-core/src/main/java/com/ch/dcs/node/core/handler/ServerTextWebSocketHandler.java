@@ -41,8 +41,9 @@ public class ServerTextWebSocketHandler extends TextWebSocketHandler {
 
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         // TODO
+
         LOG.info("连接已关闭：" + status);
     }
 

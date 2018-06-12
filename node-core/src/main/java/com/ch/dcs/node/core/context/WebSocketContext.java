@@ -2,6 +2,8 @@ package com.ch.dcs.node.core.context;
 
 import com.ch.dcs.node.core.handler.ITextMessageHandle;
 import com.ch.dcs.node.core.message.MessageType;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -10,6 +12,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class WebSocketContext implements ApplicationContextAware {
@@ -18,6 +21,7 @@ public class WebSocketContext implements ApplicationContextAware {
     private static final Map<MessageType, ITextMessageHandle> MESSAGE_HANDLES = new ConcurrentHashMap<>();
     private static final ThreadLocal<WebSocketSession> SESSION_THREAD_LOCAL = new ThreadLocal<>();
     private static final ThreadLocal<Integer> SOURCE_ID_THREAD_LOCAL = new ThreadLocal<>();
+    private static final Cache<Integer, Long> ACTIVE_SOCKETS = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.SECONDS).build();
     private static ApplicationContext context;
 
     @Override
@@ -37,8 +41,12 @@ public class WebSocketContext implements ApplicationContextAware {
         return CLIENT_SOCKET_SESSIONS.containsKey(id);
     }
 
-    public static Integer getServerId() {
-        return context.getBean(Props.class).serverId;
+    public static ApplicationContext getContext() {
+        return context;
+    }
+
+    public static Integer getId() {
+        return context.getBean(Props.class).id;
     }
 
     public static ServerType getServerType() {
@@ -75,5 +83,13 @@ public class WebSocketContext implements ApplicationContextAware {
 
     public static void clearSourceIdThreadLocal() {
         SOURCE_ID_THREAD_LOCAL.remove();
+    }
+
+    public static Cache<Integer, Long> getActiveSockets() {
+        return ACTIVE_SOCKETS;
+    }
+
+    public static void refreshActiveSocket(Integer socketId) {
+        ACTIVE_SOCKETS.put(socketId, System.currentTimeMillis());
     }
 }

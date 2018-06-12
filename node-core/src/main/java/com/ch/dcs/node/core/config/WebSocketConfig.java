@@ -9,6 +9,7 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import javax.annotation.PostConstruct;
 
@@ -19,6 +20,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @PostConstruct
     public void init() {
         WebSocketContext.registerHandler(MessageType.REPLY, new ReplyMessageHandle());
+        WebSocketContext.registerHandler(MessageType.HEARTBEAT, new HeartbeatMessageHandle());
         WebSocketContext.registerHandler(MessageType.REGISTER, new RegisterMessageHandle());
         WebSocketContext.registerHandler(MessageType.PRINT, new PrintMessageHandle());
         WebSocketContext.registerHandler(MessageType.INPUT, new InputMessageHandle());
@@ -30,13 +32,20 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry webSocketHandlerRegistry) {
         webSocketHandlerRegistry.addHandler(nodeHandler(), "/webSocket")
                 .setAllowedOrigins("*")
+                .addInterceptors(handshakeInterceptor())
                 .withSockJS();
         webSocketHandlerRegistry.addHandler(nodeHandler(), "/webSocket")
-                .setAllowedOrigins("*");
+                .setAllowedOrigins("*")
+                .addInterceptors(handshakeInterceptor());
     }
 
     @Bean
     public WebSocketHandler nodeHandler() {
         return new ServerTextWebSocketHandler();
+    }
+
+    @Bean
+    public HandshakeInterceptor handshakeInterceptor() {
+        return new ServerHandshakeInterceptor();
     }
 }

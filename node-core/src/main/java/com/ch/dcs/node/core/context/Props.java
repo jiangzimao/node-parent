@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 public class Props {
 
     @Value("${web.socket.server.id:0}")
-    public Integer serverId;
+    public Integer id;
 
     @Value("${web.socket.server.type:SERVER}")
     public ServerType serverType;

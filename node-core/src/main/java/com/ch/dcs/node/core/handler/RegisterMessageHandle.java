@@ -20,7 +20,7 @@ public class RegisterMessageHandle implements ITextMessageHandle {
     public void handleTextMessage(WebSocketSession webSocketSession, Message message) {
         Integer sourceId = message.getSourceId();
         if(sourceId == null) {
-            sourceId = WebSocketContext.getServerId();
+            sourceId = WebSocketContext.getId();
         }
         if(WebSocketContext.hasSession(sourceId)) {
             SocketSession oldSocketSession = WebSocketContext.getSession(sourceId);
@@ -32,7 +32,7 @@ public class RegisterMessageHandle implements ITextMessageHandle {
         WebSocketContext.putSession(sourceId, socketSession);
         Map<String, Object> result = new HashMap<>();
         result.put("status", Boolean.TRUE);
-        result.put("serverId", WebSocketContext.getServerId());
+        result.put("id", WebSocketContext.getId());
         result.put("sourceId", sourceId);
         Message<Map<String, Object>> req = new Message<>(MessageType.REGISTER);
         req.setData(result);

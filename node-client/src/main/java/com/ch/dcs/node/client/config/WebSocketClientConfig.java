@@ -1,10 +1,11 @@
 package com.ch.dcs.node.client.config;
 
+import com.ch.dcs.node.client.SocketConnectionManager;
 import com.ch.dcs.node.client.handle.ClientWebSocketHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.client.WebSocketConnectionManager;
+import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 
 @Component
@@ -14,10 +15,11 @@ public class WebSocketClientConfig {
     private String uriTemplate;
 
     @Bean
-    public WebSocketConnectionManager webSocketConnectionManager() {
+    public SocketConnectionManager socketManager() {
         StandardWebSocketClient client = new StandardWebSocketClient();
-        WebSocketConnectionManager manager = new WebSocketConnectionManager(client, new ClientWebSocketHandler(), uriTemplate);
-        manager.setAutoStartup(true);
+        WebSocketHandler webSocketHandler = new ClientWebSocketHandler();
+        SocketConnectionManager manager = new SocketConnectionManager(client, webSocketHandler, uriTemplate);
+        manager.startHeartbeat();
         return manager;
     }
 
