@@ -4,6 +4,7 @@ import com.ch.dcs.node.core.context.WebSocketContext;
 import com.ch.dcs.node.core.message.Message;
 import com.ch.dcs.node.core.message.MessageType;
 import com.ch.dcs.node.core.utils.JsonUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.CloseStatus;
@@ -17,7 +18,7 @@ public class ServerTextWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        // TODO
+        LOG.info(String.format("Socket session[%s] connection successful.", session.getId()));
     }
 
     @Override
@@ -31,20 +32,22 @@ public class ServerTextWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
-        // TODO
-        if (session.isOpen()) {
+        String sessionId = session.getId();
+        if(StringUtils.isNotBlank(sessionId)) {
+            WebSocketContext.removeSession(sessionId);
+        } else if(session.isOpen()) {
             session.close();
         }
-        LOG.error("连接出错");
+        LOG.error(String.format("Session[%s] transport error: %s", session.getId(), exception.getMessage()));
     }
-
-
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        // TODO
-
-        LOG.info("连接已关闭：" + status);
+        String sessionId = session.getId();
+        if(StringUtils.isNotBlank(sessionId)) {
+            WebSocketContext.removeSession(sessionId);
+        }
+        LOG.info(String.format("Connection[%s] Closed: %s", session.getId(), status));
     }
 
     @Override

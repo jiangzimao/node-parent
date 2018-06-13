@@ -1,5 +1,7 @@
 package com.ch.dcs.node.core.context;
 
+import com.ch.dcs.node.core.config.IConfig;
+import com.ch.dcs.node.core.config.Props;
 import com.ch.dcs.node.core.handler.ITextMessageHandle;
 import com.ch.dcs.node.core.message.MessageType;
 import com.google.common.cache.Cache;
@@ -17,11 +19,15 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class WebSocketContext implements ApplicationContextAware {
 
+    private static final Map<String, Integer> NODE_SOCKET_ID_MAPPING = new ConcurrentHashMap<>();
     private static final Map<Integer, SocketSession> CLIENT_SOCKET_SESSIONS = new ConcurrentHashMap<>();
     private static final Map<MessageType, ITextMessageHandle> MESSAGE_HANDLES = new ConcurrentHashMap<>();
+    private static final Cache<Integer, Long> ACTIVE_SOCKETS
+            = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.SECONDS).build();
+
     private static final ThreadLocal<WebSocketSession> SESSION_THREAD_LOCAL = new ThreadLocal<>();
     private static final ThreadLocal<Integer> SOURCE_ID_THREAD_LOCAL = new ThreadLocal<>();
-    private static final Cache<Integer, Long> ACTIVE_SOCKETS = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.SECONDS).build();
+
     private static ApplicationContext context;
 
     @Override
@@ -29,16 +35,31 @@ public class WebSocketContext implements ApplicationContextAware {
         WebSocketContext.context = applicationContext;
     }
 
-    public static void putSession(Integer id, SocketSession socketSession) {
-        CLIENT_SOCKET_SESSIONS.put(id, socketSession);
+    public static void putSession(Integer nodeId, SocketSession socketSession) {
+        NODE_SOCKET_ID_MAPPING.put(socketSession.getSessionId(), nodeId);
+        CLIENT_SOCKET_SESSIONS.put(nodeId, socketSession);
     }
 
-    public static SocketSession getSession(Integer id) {
-        return CLIENT_SOCKET_SESSIONS.get(id);
+    public static void removeSession(String id) {
+        Integer nodeId = NODE_SOCKET_ID_MAPPING.get(id);
+        if(nodeId != null) {
+            SocketSession socketSession = CLIENT_SOCKET_SESSIONS.get(nodeId);
+            if(socketSession != null) {
+                if(socketSession.isOpen()) {
+                    socketSession.close();
+                }
+                CLIENT_SOCKET_SESSIONS.remove(nodeId);
+            }
+            ACTIVE_SOCKETS.invalidate(nodeId);
+        }
     }
 
-    public static boolean hasSession(Integer id) {
-        return CLIENT_SOCKET_SESSIONS.containsKey(id);
+    public static SocketSession getSession(Integer nodeId) {
+        return CLIENT_SOCKET_SESSIONS.get(nodeId);
+    }
+
+    public static boolean hasSession(Integer nodeId) {
+        return CLIENT_SOCKET_SESSIONS.containsKey(nodeId);
     }
 
     public static ApplicationContext getContext() {
@@ -46,11 +67,11 @@ public class WebSocketContext implements ApplicationContextAware {
     }
 
     public static Integer getId() {
-        return context.getBean(Props.class).id;
+        return context.getBean(IConfig.class).getId();
     }
 
     public static ServerType getServerType() {
-        return context.getBean(Props.class).serverType;
+        return context.getBean(IConfig.class).getServerType();
     }
 
     public static void registerHandler(MessageType messageType, ITextMessageHandle messageHandle) {

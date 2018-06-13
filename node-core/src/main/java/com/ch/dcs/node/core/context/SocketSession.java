@@ -50,4 +50,8 @@ public class SocketSession {
     public boolean isOpen() {
         return webSocketSession.isOpen();
     }
+
+    public String getSessionId() {
+        return this.webSocketSession.getId();
+    }
 }

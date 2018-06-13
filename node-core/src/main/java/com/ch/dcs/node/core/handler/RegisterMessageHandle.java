@@ -37,6 +37,7 @@ public class RegisterMessageHandle implements ITextMessageHandle {
         Message<Map<String, Object>> req = new Message<>(MessageType.REGISTER);
         req.setData(result);
         MessageSender.send(sourceId, req);
-        LOG.info(String.format("Client[%s] registration successful.", sourceId));
+        LOG.info(String.format("Socket client [id=%s, nodeId=%s] registration successful.",
+                webSocketSession.getId(), sourceId));
     }
 }
