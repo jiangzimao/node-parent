@@ -1,4 +1,3 @@
-
 let webSocketUri = null;
 let socketClientId = null;
 let socketClient = null;
