@@ -15,6 +15,11 @@ public class MessageSender {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageSender.class);
 
+    public static <M, R> R syncSend(Integer targetId, M message, Class<R> resultClass, WebSocketSession... sessions) {
+        send(targetId, message, sessions);
+        return null;
+    }
+
     public static <T> void send(Integer targetId, T message, WebSocketSession... sessions) {
         if(targetId != null) {
             SocketSession socketSession = WebSocketContext.getSession(targetId);
