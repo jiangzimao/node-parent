@@ -9,14 +9,29 @@ const send = () => {
     const message = document.getElementById("message");
     const innerHTML = document.getElementById("show_div").innerHTML;
     document.getElementById("show_div").innerHTML = innerHTML + '<br />发送:<span style="color: red">' + message.value + '</span>';
-    const req = { messageType: 'CHAT', targetId: targetId.value, sourceId: getClientId(), data: message.value};
+    const req = { sync: true, messageType: 'CHAT', targetId: targetId.value, sourceId: getClientId(), data: message.value};
     message.value = '';
-    sendMessage(req);
+    (
+        async () => {
+            const rs = await sendMessage(req);
+            if(rs !== null || rs !== undefined) {
+                const { data: {status, errorMsg} } = rs;
+                if (status) {
+                    console.info('消息发送成功！');
+                } else {
+                    console.info('消息发送失败！' + errorMsg);
+                }
+            }
+
+        }
+    )();
+
 };
 
 const receive = (replay) => {
     const innerHTML = document.getElementById("show_div").innerHTML;
     document.getElementById("show_div").innerHTML = innerHTML + '<br />收到:' + replay;
+    return { status: true };
 };
 
 const segClientId = () => {
@@ -29,7 +44,7 @@ class App extends Component {
         onMessage(function (data) {
             console.log('这是回调方法，返回值：' + JSON.stringify(data));
             const { data : replay } = data;
-            receive(replay);
+            return receive(replay);
         });
         start();
     }

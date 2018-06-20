@@ -1,7 +1,6 @@
 package com.ch.dcs.node.core.context;
 
 import com.ch.dcs.node.core.config.IConfig;
-import com.ch.dcs.node.core.config.Props;
 import com.ch.dcs.node.core.handler.ITextMessageHandle;
 import com.ch.dcs.node.core.message.MessageType;
 import com.google.common.cache.Cache;

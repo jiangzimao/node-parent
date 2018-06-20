@@ -5,6 +5,7 @@ import com.ch.dcs.node.client.handle.ClientWebSocketHandler;
 import com.ch.dcs.node.core.config.IConfig;
 import com.ch.dcs.node.core.config.Props;
 import com.ch.dcs.node.core.context.ServerType;
+import com.ch.dcs.node.core.handler.ServerTextWebSocketHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
@@ -26,8 +27,9 @@ public class ClientConfig implements IConfig {
     @Bean
     public SocketConnectionManager socketManager() {
         StandardWebSocketClient client = new StandardWebSocketClient();
-        WebSocketHandler webSocketHandler = new ClientWebSocketHandler();
+        WebSocketHandler webSocketHandler = new ServerTextWebSocketHandler();
         SocketConnectionManager manager = new SocketConnectionManager(client, webSocketHandler, clientProp.serverUri);
+        //manager.setAutoStartup(true);
         manager.startHeartbeat();
         return manager;
     }

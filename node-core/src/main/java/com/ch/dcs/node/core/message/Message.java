@@ -4,6 +4,10 @@ import java.io.Serializable;
 
 public class Message<T> implements Serializable {
 
+    private Boolean sync = false;
+
+    private Long requestId;
+
     private MessageType messageType;
 
     private Integer targetId;
@@ -18,6 +22,14 @@ public class Message<T> implements Serializable {
     public Message(MessageType messageType) {
         this();
         this.messageType = messageType;
+    }
+
+    public Long getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(Long requestId) {
+        this.requestId = requestId;
     }
 
     public MessageType getMessageType() {
@@ -48,13 +60,11 @@ public class Message<T> implements Serializable {
         this.data = data;
     }
 
-    @Override
-    public String toString() {
-        return "Message{" +
-                "messageType=" + messageType +
-                ", targetId=" + targetId +
-                ", sourceId=" + sourceId +
-                ", data='" + data + '\'' +
-                '}';
+    public Boolean getSync() {
+        return sync;
+    }
+
+    public void setSync(Boolean sync) {
+        this.sync = sync;
     }
 }

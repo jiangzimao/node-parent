@@ -26,7 +26,8 @@ public class ServerTextWebSocketHandler extends TextWebSocketHandler {
         Message message = JsonUtil.toObject(textMessage.getPayload(), Message.class);
         MessageType type = message.getMessageType();
         ITextMessageHandle messageHandle = WebSocketContext.getMessageHandle(type);
-        messageHandle.handleTextMessage(session, message);
+        // TODO  多线程调用
+        new Thread(() -> messageHandle.handleTextMessage(session, message)).start();
     }
 
 

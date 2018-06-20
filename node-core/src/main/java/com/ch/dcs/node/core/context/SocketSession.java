@@ -38,7 +38,7 @@ public class SocketSession {
             try {
                 webSocketSession.sendMessage(message);
             } catch (Throwable e) {
-                LOG.error(String.format("send message[%s] error.", message.getPayload()), e);
+                LOG.error(String.format("sendMessage message[%s] error.", message.getPayload()), e);
             }
         }
     }

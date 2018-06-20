@@ -4,6 +4,7 @@ let socketClient = null;
 let onMessageFun = null;
 let onCloseFun = null;
 let onErrorFun = null;
+const replyContext = new Map();
 
 const getClientId = () => {
     return socketClientId;
@@ -21,17 +22,35 @@ const onError = (fun) => {
     onErrorFun = fun;
 };
 
-const sendMessage = (message) => {
+const sendMessage = async (message) => {
     if (socketClient !== null && socketClient !== undefined) {
-        const {messageType, clientId} = message;
+        const {messageType, clientId, sync} = message;
         if (clientId === null || clientId === undefined) {
             Object.assign(message, {clientId: socketClientId});
         }
         if (messageType === null || messageType === undefined) {
             console.error('messageType is null.');
         } else {
-            socketClient.send(JSON.stringify(message));
+            if (sync) {
+                const requestId = new Date().getTime();
+                const promise = new Promise((resolve, reject) => {
+                    replyContext.set(requestId, {resolve, reject});
+                    Object.assign(message, {requestId});
+                    console.info('准备发送：'+socketClient.readyState);
+                    socketClient.send(JSON.stringify(message));
+                    console.info('发送完成：'+socketClient.readyState);
+                });
+                return await promise.then(function (rs) {
+                    return rs;
+                }).catch(function (err) {
+                    return err;
+                });
+            } else {
+                socketClient.send(JSON.stringify(message));
+                console.info('异步发送消息:'+socketClient.readyState);
+            }
         }
+
     } else {
         console.error('WebSocketClient is null.');
     }
@@ -46,7 +65,7 @@ const start = () => {
     }
     connection();
     // 启动心跳
-    heartbeat.reset().start();
+    //heartbeat.reset().start();
 };
 
 const connection = () => {
@@ -57,27 +76,46 @@ const connection = () => {
         return;
     }
     socketClient.onopen = function () {
-        const req = {messageType: 'REGISTER', data: 'register'};
-        socketClient.send(JSON.stringify(req));
-        console.info('The connection is successful and the registration message is sent.');
+        (
+            async () => {
+                const req = {
+                    sync: true,
+                    requestId: new Date().getTime(),
+                    messageType: 'REGISTER',
+                    data: 'client register'
+                };
+                console.log('start register');
+                const rs = await sendMessage(req);
+                const {data : {sourceId, status}} = rs;
+                if (status) {
+                    socketClientId = sourceId;
+                    console.info(`Client registration is successful, clientId is ${socketClientId}. response[${rs}]`);
+                } else {
+                    console.error('Client registration failure.');
+                }
+            }
+        )();
     };
     socketClient.onmessage = function (msg) {
         const data = msg.data;
+        console.log('收到消息：' + data);
         if (data !== null && data !== undefined) {
             const message = JSON.parse(data);
+            if (message === null || message === undefined) {
+                console.log(`data[${data}] message is null.`);
+                return;
+            }
             const {messageType} = message;
             if (messageType !== null && messageType !== undefined) {
                 switch (messageType) {
-                    case 'HEARTBEAT':
-                        console.info(`heartbeat successful. ${data}`);
-                        return;
-                    case 'REGISTER':
-                        const {sourceId, status} = message.data;
-                        if (status) {
-                            socketClientId = sourceId;
-                            console.info(`Client registration is successful, clientId is ${socketClientId}. response[${data}]`);
-                        } else {
-                            console.error('Client registration failure.');
+                    case 'REPLY':
+                        const {requestId: rid} = message;
+                        if (rid && rid > 0 && replyContext.has(rid)) {
+                            const {resolve} = replyContext.get(rid);
+                            if (resolve !== null && resolve !== undefined) {
+                                resolve(message);
+                            }
+                            replyContext.delete(rid);
                         }
                         return;
                     default:
@@ -85,7 +123,15 @@ const connection = () => {
                 }
             }
             if (onMessageFun !== null && onMessageFun !== undefined) {
-                onMessageFun(message);
+                const res = onMessageFun(message);
+                const {sync, requestId, targetId, sourceId} = message;
+                if (sync && requestId && requestId > 0) {
+                    // 响应
+                    const resData = res === undefined || res === null ? true : res;
+                    const response = {sync: false, requestId, messageType: 'REPLY', targetId: sourceId, sourceId: targetId, data: resData};
+                    sendMessage(response);
+                    console.log('响应完成' + JSON.stringify(response));
+                }
             }
         }
     };
@@ -148,7 +194,7 @@ const heartbeat = {
     },
     start() {
         this.timeoutObj = setInterval(() => {
-            if(socketClient.readyState === 1) {
+            if (socketClient.readyState === 1) {
                 const req = {
                     messageType: 'HEARTBEAT',
                     targetId: socketClientId,

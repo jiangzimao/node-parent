@@ -5,12 +5,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
 
-public class PrintMessageHandle extends AbstractMessageHandle {
+public class PrintMessageHandle extends AbstractMessageHandle<String> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PrintMessageHandle.class);
 
     @Override
-    protected void handle(WebSocketSession session, Message message) {
+    protected void handle(WebSocketSession session, Message<String> message) {
         // TODO 调用本地打印服务
         LOG.info(String.format("调用本地服务打印 [%s]", message.getData()));
     }

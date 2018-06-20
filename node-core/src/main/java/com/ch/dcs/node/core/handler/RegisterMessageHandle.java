@@ -12,12 +12,12 @@ import org.springframework.web.socket.WebSocketSession;
 import java.util.HashMap;
 import java.util.Map;
 
-public class RegisterMessageHandle implements ITextMessageHandle {
+public class RegisterMessageHandle implements ITextMessageHandle<String> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RegisterMessageHandle.class);
 
     @Override
-    public void handleTextMessage(WebSocketSession webSocketSession, Message message) {
+    public void handleTextMessage(WebSocketSession webSocketSession, Message<String> message) {
         Integer sourceId = message.getSourceId();
         if(sourceId == null) {
             sourceId = WebSocketContext.getId();
@@ -30,13 +30,16 @@ public class RegisterMessageHandle implements ITextMessageHandle {
         }
         SocketSession socketSession = new SocketSession(sourceId, webSocketSession);
         WebSocketContext.putSession(sourceId, socketSession);
+        Message<Map<String, Object>> req = new Message<>(MessageType.REPLY);
+        req.setRequestId(message.getRequestId());
+        req.setTargetId(message.getSourceId());
+        req.setSourceId(WebSocketContext.getId());
         Map<String, Object> result = new HashMap<>();
         result.put("status", Boolean.TRUE);
         result.put("id", WebSocketContext.getId());
         result.put("sourceId", sourceId);
-        Message<Map<String, Object>> req = new Message<>(MessageType.REGISTER);
         req.setData(result);
-        MessageSender.send(sourceId, req);
+        MessageSender.sendMessage(sourceId, req);
         LOG.info(String.format("Socket client [id=%s, nodeId=%s] registration successful.",
                 webSocketSession.getId(), sourceId));
     }
