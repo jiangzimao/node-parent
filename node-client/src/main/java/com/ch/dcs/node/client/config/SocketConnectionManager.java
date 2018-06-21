@@ -1,13 +1,11 @@
-package com.ch.dcs.node.client;
+package com.ch.dcs.node.client.config;
 
-import com.ch.dcs.node.client.config.ClientProp;
 import com.ch.dcs.node.core.context.Constant;
 import com.ch.dcs.node.core.context.MessageSender;
 import com.ch.dcs.node.core.context.SocketSession;
 import com.ch.dcs.node.core.context.WebSocketContext;
 import com.ch.dcs.node.core.message.Message;
 import com.ch.dcs.node.core.message.MessageType;
-import com.ch.dcs.node.core.utils.RequestIdUtil;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.context.Lifecycle;
 import org.springframework.http.HttpHeaders;

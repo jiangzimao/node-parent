@@ -4,9 +4,9 @@ import com.ch.dcs.node.core.config.IConfig;
 import com.ch.dcs.node.core.config.Props;
 import com.ch.dcs.node.core.context.ServerType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
-@Configuration
+@Component
 public class ServerConfig implements IConfig {
 
     private final Props props;

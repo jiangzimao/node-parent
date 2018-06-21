@@ -1,7 +1,5 @@
 package com.ch.dcs.node.client.config;
 
-import com.ch.dcs.node.client.SocketConnectionManager;
-import com.ch.dcs.node.client.handle.ClientWebSocketHandler;
 import com.ch.dcs.node.core.config.IConfig;
 import com.ch.dcs.node.core.config.Props;
 import com.ch.dcs.node.core.context.ServerType;
@@ -29,7 +27,6 @@ public class ClientConfig implements IConfig {
         StandardWebSocketClient client = new StandardWebSocketClient();
         WebSocketHandler webSocketHandler = new ServerTextWebSocketHandler();
         SocketConnectionManager manager = new SocketConnectionManager(client, webSocketHandler, clientProp.serverUri);
-        //manager.setAutoStartup(true);
         manager.startHeartbeat();
         return manager;
     }
