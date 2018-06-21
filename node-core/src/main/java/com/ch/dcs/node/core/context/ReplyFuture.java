@@ -1,5 +1,6 @@
 package com.ch.dcs.node.core.context;
 
+import com.ch.dcs.node.core.config.Props;
 import com.ch.dcs.node.core.message.Message;
 
 import java.util.concurrent.CountDownLatch;
@@ -31,7 +32,7 @@ public class ReplyFuture {
 
     public Message getReply() {
         try {
-            latch.await(1, TimeUnit.MINUTES);
+            latch.await(WebSocketContext.getContext().getBean(Props.class).syncTimeout, TimeUnit.SECONDS);
         } catch (Throwable e) {
             throw new RuntimeException(String.format("The request[%s] timeout", requestId));
         }

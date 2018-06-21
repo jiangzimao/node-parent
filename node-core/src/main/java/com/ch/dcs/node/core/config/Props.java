@@ -9,4 +9,7 @@ public class Props {
     @Value("${web.socket.server.id:0}")
     public Integer id;
 
+    @Value("${web.socket.sync.timeout:30}")
+    public Integer syncTimeout;
+
 }
