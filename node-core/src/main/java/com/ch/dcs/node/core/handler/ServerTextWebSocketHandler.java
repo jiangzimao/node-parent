@@ -12,9 +12,26 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class ServerTextWebSocketHandler extends TextWebSocketHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(ServerTextWebSocketHandler.class);
+
+    private ExecutorService executorService;
+
+    public ServerTextWebSocketHandler() {
+        this.executorService = Executors.newCachedThreadPool(new ThreadFactory(){
+            private final AtomicInteger number = new AtomicInteger(0);
+            @Override
+            public Thread newThread(Runnable r) {
+                return new Thread(r, String.format("Handle-thread-%s", number.incrementAndGet()));
+            }
+        });
+    }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -23,11 +40,13 @@ public class ServerTextWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage textMessage) {
-        Message message = JsonUtil.toObject(textMessage.getPayload(), Message.class);
-        MessageType type = message.getMessageType();
-        ITextMessageHandle messageHandle = WebSocketContext.getMessageHandle(type);
-        // TODO  多线程调用
-        new Thread(() -> messageHandle.handleTextMessage(session, message)).start();
+        // 多线程处理，避免阻塞
+        executorService.submit(() -> {
+            Message message = JsonUtil.toObject(textMessage.getPayload(), Message.class);
+            MessageType type = message.getMessageType();
+            ITextMessageHandle messageHandle = WebSocketContext.getMessageHandle(type);
+            messageHandle.handleTextMessage(session, message);
+        });
     }
 
 

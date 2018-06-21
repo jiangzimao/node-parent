@@ -120,7 +120,7 @@ public class SocketConnectionManager extends ConnectionManagerSupport {
         message.setSync(Boolean.TRUE);
         message.setData(String.format("client[%s] register.", WebSocketContext.getId()));
         Message<Map<String, Object>> registerRes = MessageSender.sendSyncMessage(null, message, session);
-        if(registerRes != null && registerRes.getData() != null && Boolean.valueOf(registerRes.getData().get("status").toString())) {
+        if (registerRes != null && registerRes.getData() != null && Boolean.valueOf(registerRes.getData().get("status").toString())) {
             // 注册响应消息, 服务端 socketId 默认为 0
             SocketSession serverSocketSession = WebSocketContext.getSession(Constant.CENTER_SOCKET_ID);
             if (serverSocketSession != null) {
@@ -135,25 +135,25 @@ public class SocketConnectionManager extends ConnectionManagerSupport {
         Integer heartbeatTime = WebSocketContext.getContext().getBean(ClientProp.class).heartbeatTime;
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
         scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            if(webSocketSession == null) {
+            if (webSocketSession == null) {
                 openConnection();
-            } else if(!webSocketSession.isOpen()) {
+            } else if (!webSocketSession.isOpen()) {
                 try {
                     closeConnection();
                 } catch (Throwable e) {
                     SocketConnectionManager.this.logger.error("Close connection error.", e);
                 }
                 openConnection();
-            } else {
+            } else if (WebSocketContext.hasSession(Constant.CENTER_SOCKET_ID)) {
                 //Long lastActiveTime = WebSocketContext.getActiveSockets().getIfPresent(Constant.CENTER_SOCKET_ID);
                 //if(lastActiveTime == null || System.currentTimeMillis() - lastActiveTime >= heartbeatTime * 1000) {
-                    // 超出指定时间未有信息交互，则发送心跳请求
-                    Message<String> reqMessage = new Message<>(MessageType.HEARTBEAT);
-                    reqMessage.setSourceId(WebSocketContext.getId());
-                    reqMessage.setTargetId(Constant.CENTER_SOCKET_ID);
-                    reqMessage.setData(DateFormatUtils.format(System.currentTimeMillis(), "yyyy-MM-dd HH:mm:ss:SSS"));
-                    Message<String> heartbeatRes = MessageSender.sendSyncMessage(Constant.CENTER_SOCKET_ID, reqMessage);
-                    WebSocketContext.refreshActiveSocket(heartbeatRes.getSourceId());
+                // 超出指定时间未有信息交互，则发送心跳请求
+                Message<String> reqMessage = new Message<>(MessageType.HEARTBEAT);
+                reqMessage.setSourceId(WebSocketContext.getId());
+                reqMessage.setTargetId(Constant.CENTER_SOCKET_ID);
+                reqMessage.setData(DateFormatUtils.format(System.currentTimeMillis(), "yyyy-MM-dd HH:mm:ss:SSS"));
+                Message<String> heartbeatRes = MessageSender.sendSyncMessage(Constant.CENTER_SOCKET_ID, reqMessage);
+                WebSocketContext.refreshActiveSocket(heartbeatRes.getSourceId());
                 //}
             }
         }, 0, heartbeatTime, TimeUnit.SECONDS);

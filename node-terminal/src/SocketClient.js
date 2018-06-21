@@ -36,9 +36,7 @@ const sendMessage = async (message) => {
                 const promise = new Promise((resolve, reject) => {
                     replyContext.set(requestId, {resolve, reject});
                     Object.assign(message, {requestId});
-                    console.info('准备发送：'+socketClient.readyState);
                     socketClient.send(JSON.stringify(message));
-                    console.info('发送完成：'+socketClient.readyState);
                 });
                 return await promise.then(function (rs) {
                     return rs;
@@ -47,7 +45,6 @@ const sendMessage = async (message) => {
                 });
             } else {
                 socketClient.send(JSON.stringify(message));
-                console.info('异步发送消息:'+socketClient.readyState);
             }
         }
 
@@ -65,7 +62,7 @@ const start = () => {
     }
     connection();
     // 启动心跳
-    //heartbeat.reset().start();
+    heartbeat.reset().start();
 };
 
 const connection = () => {
@@ -98,7 +95,6 @@ const connection = () => {
     };
     socketClient.onmessage = function (msg) {
         const data = msg.data;
-        console.log('收到消息：' + data);
         if (data !== null && data !== undefined) {
             const message = JSON.parse(data);
             if (message === null || message === undefined) {
@@ -130,7 +126,6 @@ const connection = () => {
                     const resData = res === undefined || res === null ? true : res;
                     const response = {sync: false, requestId, messageType: 'REPLY', targetId: sourceId, sourceId: targetId, data: resData};
                     sendMessage(response);
-                    console.log('响应完成' + JSON.stringify(response));
                 }
             }
         }
@@ -193,15 +188,16 @@ const heartbeat = {
         return this;
     },
     start() {
-        this.timeoutObj = setInterval(() => {
+        this.timeoutObj = setInterval(async() => {
             if (socketClient.readyState === 1) {
                 const req = {
+                    sync: true,
                     messageType: 'HEARTBEAT',
                     targetId: socketClientId,
                     sourceId: socketClientId,
                     data: getNowFormatDate()
                 };
-                socketClient.send(JSON.stringify(req));
+                await sendMessage(req);
             } else {
                 connection();
             }
