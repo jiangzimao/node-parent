@@ -16,29 +16,31 @@ public class MessageSender {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageSender.class);
 
-    public static <E, T> Message<T> sendSyncMessage(Integer targetId, Message<E> message, WebSocketSession... sessions) {
-        return sendMsg(targetId, message, true, sessions);
+    public static <E, T> Message<T> sendSyncMessage(Integer targetId, Message<E> message, Class<T> resultClass,
+                                                    WebSocketSession... sessions) {
+        return sendMsg(targetId, message, true, resultClass, sessions);
     }
 
     public static <E> void sendMessage(Integer targetId, Message<E> message, WebSocketSession... sessions) {
-        sendMsg(targetId, message, false, sessions);
+        sendMsg(targetId, message, false, null, sessions);
     }
 
-    private static <E, T> Message<T> sendMsg(Integer targetId, Message<E> message, Boolean sync, WebSocketSession... sessions) {
-        if(targetId != null) {
+    private static <E, T> Message<T> sendMsg(Integer targetId, Message<E> message, Boolean sync, Class<? extends T> resultClass,
+                                             WebSocketSession... sessions) {
+        if (targetId != null) {
             SocketSession socketSession = WebSocketContext.getSession(targetId);
-            if(socketSession == null || !socketSession.isOpen()) {
+            if (socketSession == null || !socketSession.isOpen()) {
                 String errorMsg;
-                if(socketSession == null) {
+                if (socketSession == null) {
                     errorMsg = String.format("No available socketSession with targetId[%s] was found.", targetId);
                 } else {
                     errorMsg = String.format("The socketSession[targetId=%s] not open.", targetId);
                 }
                 LOG.error(errorMsg);
                 WebSocketSession threadLocalSession = WebSocketContext.getThreadLocalSession();
-                if(threadLocalSession != null && threadLocalSession.isOpen()) {
+                if (threadLocalSession != null && threadLocalSession.isOpen()) {
                     Integer sourceId = WebSocketContext.getSourceIdThreadLocal();
-                    if(sourceId != null) {
+                    if (sourceId != null) {
                         Map<String, Object> data = new HashMap<>();
                         data.put("status", Boolean.FALSE);
                         data.put("errorMsg", errorMsg);
@@ -48,19 +50,19 @@ public class MessageSender {
                         replyMessage.setTargetId(sourceId);
                         // replyMessage.setSourceId(WebSocketContext.getId());
                         replyMessage.setData(data);
-                        if(sync) {
+                        if (sync) {
                             return (Message<T>) replyMessage;
                         }
-                        return sendMsg(null, replyMessage, sync, threadLocalSession);
+                        return sendMsg(null, replyMessage, sync, resultClass, threadLocalSession);
                     }
                 }
             } else {
-                if(sync) {
-                    if(message.getRequestId() == null || message.getRequestId() <= 0) {
+                if (sync) {
+                    if (message.getRequestId() == null || message.getRequestId() <= 0) {
                         message.setRequestId(RequestIdUtil.getRequestId());
                     }
                     TextMessage textMessage = new TextMessage(JsonUtil.toString(message));
-                    ReplyFuture replyFuture = ReplyContext.newReplyFuture(message.getRequestId());
+                    ReplyFuture<T> replyFuture = ReplyContext.newReplyFuture(message.getRequestId(), resultClass);
                     socketSession.sendMessage(textMessage);
                     return (Message<T>) replyFuture.getReply();
                 } else {
@@ -68,15 +70,15 @@ public class MessageSender {
                     socketSession.sendMessage(textMessage);
                 }
             }
-        } else if(sessions != null && sessions.length > 0) {
+        } else if (sessions != null && sessions.length > 0) {
             WebSocketSession session = sessions[0];
-            if(session.isOpen()) {
+            if (session.isOpen()) {
                 try {
-                    if(sync) {
-                        if(message.getRequestId() == null || message.getRequestId() <= 0) {
+                    if (sync) {
+                        if (message.getRequestId() == null || message.getRequestId() <= 0) {
                             message.setRequestId(RequestIdUtil.getRequestId());
                         }
-                        ReplyFuture replyFuture = ReplyContext.newReplyFuture(message.getRequestId());
+                        ReplyFuture replyFuture = ReplyContext.newReplyFuture(message.getRequestId(), resultClass);
                         session.sendMessage(new TextMessage(JsonUtil.toString(message)));
                         return (Message<T>) replyFuture.getReply();
                     } else {

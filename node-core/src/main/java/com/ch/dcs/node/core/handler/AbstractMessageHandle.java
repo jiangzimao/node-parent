@@ -3,12 +3,32 @@ package com.ch.dcs.node.core.handler;
 import com.ch.dcs.node.core.context.*;
 import com.ch.dcs.node.core.message.Message;
 import com.ch.dcs.node.core.message.MessageType;
+import com.ch.dcs.node.core.utils.JsonUtil;
+import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.lang.reflect.Type;
 
 public abstract class AbstractMessageHandle<T> implements ITextMessageHandle<T> {
 
+    private Type defaultType;
+
+    private AbstractMessageHandle() {
+    }
+
+    AbstractMessageHandle(Type type) {
+        this();
+        this.defaultType = type;
+    }
+
     @Override
-    public final void handleTextMessage(WebSocketSession session, Message<T> message) {
+    public final void handleTextMessage(WebSocketSession session, TextMessage textMessage) {
+        Message<T> message = JsonUtil.toObject(textMessage.getPayload(), defaultType);
+        handleMessage(session, message);
+    }
+
+    @Override
+    public final void handleMessage(WebSocketSession session, Message<T> message) {
         Integer sourceId = message.getSourceId();
         MessageType messageType = message.getMessageType();
         try {
@@ -35,9 +55,10 @@ public abstract class AbstractMessageHandle<T> implements ITextMessageHandle<T> 
                     // 如果为节点服务，则推送到服务端进行转发
                     targetId = Constant.CENTER_SOCKET_ID;
                 }
+                Class<T> cla = null;
                 // 推送到目标节点处理
                 if(message.getSync()) {
-                    Message<T> response = MessageSender.sendSyncMessage(targetId, message);
+                    Message response = MessageSender.sendSyncMessage(targetId, message, message.getReplyClass());
                     MessageSender.sendMessage(response.getTargetId(), response);
                 } else {
                     MessageSender.sendMessage(targetId, message);
@@ -49,7 +70,6 @@ public abstract class AbstractMessageHandle<T> implements ITextMessageHandle<T> 
                 WebSocketContext.clearSourceIdThreadLocal();
             }
         }
-
     }
 
     protected abstract void handle(WebSocketSession session, Message<T> message);

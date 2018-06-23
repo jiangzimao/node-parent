@@ -16,6 +16,8 @@ public class Message<T> implements Serializable {
 
     private T data;
 
+    private Class<?> replyClass;
+
     private Message() {
     }
 
@@ -66,5 +68,26 @@ public class Message<T> implements Serializable {
 
     public void setSync(Boolean sync) {
         this.sync = sync;
+    }
+
+    public Class<?> getReplyClass() {
+        return replyClass;
+    }
+
+    public void setReplyClass(Class<?> replyClass) {
+        this.replyClass = replyClass;
+    }
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "sync=" + sync +
+                ", requestId=" + requestId +
+                ", messageType=" + messageType +
+                ", targetId=" + targetId +
+                ", sourceId=" + sourceId +
+                ", data=" + data +
+                ", replyClass=" + replyClass +
+                '}';
     }
 }

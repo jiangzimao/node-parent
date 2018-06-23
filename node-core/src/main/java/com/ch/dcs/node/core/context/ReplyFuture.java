@@ -6,13 +6,13 @@ import com.ch.dcs.node.core.message.Message;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class ReplyFuture {
+public class ReplyFuture<T> {
 
     private Long requestId;
 
     private final CountDownLatch latch = new CountDownLatch(1);
 
-    private Message reply;
+    private Message<T> reply;
 
     private ReplyFuture() {
     }
@@ -22,7 +22,7 @@ public class ReplyFuture {
         this.requestId = requestId;
     }
 
-    public void setReply(Message reply) {
+    public void setReply(Message<T> reply) {
         this.reply = reply;
     }
 

@@ -1,7 +1,6 @@
 package com.ch.dcs.node.core.handler;
 
 import com.ch.dcs.node.core.context.WebSocketContext;
-import com.ch.dcs.node.core.message.Message;
 import com.ch.dcs.node.core.message.MessageType;
 import com.ch.dcs.node.core.utils.JsonUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -41,11 +40,12 @@ public class ServerTextWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage textMessage) {
         // 多线程处理，避免阻塞
+        final String message = textMessage.getPayload();
+        LOG.info(String.format("收到消息：%s", message));
         executorService.submit(() -> {
-            Message message = JsonUtil.toObject(textMessage.getPayload(), Message.class);
-            MessageType type = message.getMessageType();
-            ITextMessageHandle messageHandle = WebSocketContext.getMessageHandle(type);
-            messageHandle.handleTextMessage(session, message);
+            MessageType messageType = MessageType.valueOf(JsonUtil.getMember(message,"messageType"));
+            ITextMessageHandle messageHandle = WebSocketContext.getMessageHandle(messageType);
+            messageHandle.handleTextMessage(session, textMessage);
         });
     }
 

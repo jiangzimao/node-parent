@@ -9,18 +9,18 @@ import java.util.concurrent.TimeUnit;
 
 public class ReplyContext {
 
-    private static final Cache<Long, ReplyFuture> SYNC_REPLY_CACHE
+    private static final Cache<Long, ReplyFuture<?>> SYNC_REPLY_CACHE
             = CacheBuilder.newBuilder()
             .expireAfterWrite(WebSocketContext.getContext().getBean(Props.class).syncTimeout, TimeUnit.SECONDS)
             .build();
 
-    public static ReplyFuture newReplyFuture(Long requestId) {
+    public static <T> ReplyFuture newReplyFuture(Long requestId, Class<T> replyClass) {
         ReplyFuture replyFuture = new ReplyFuture(requestId);
         SYNC_REPLY_CACHE.put(requestId, replyFuture);
         return replyFuture;
     }
 
-    public static void updateReplyFuture(Long requestId, Message message) {
+    public static <T> void updateReplyFuture(Long requestId, Message<T> message) {
         ReplyFuture replyFuture = SYNC_REPLY_CACHE.getIfPresent(requestId);
         if(replyFuture != null) {
             try {

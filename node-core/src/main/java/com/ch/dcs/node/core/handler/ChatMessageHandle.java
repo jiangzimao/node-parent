@@ -4,6 +4,7 @@ import com.ch.dcs.node.core.context.Constant;
 import com.ch.dcs.node.core.context.MessageSender;
 import com.ch.dcs.node.core.context.WebSocketContext;
 import com.ch.dcs.node.core.message.Message;
+import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
@@ -11,6 +12,11 @@ import org.springframework.web.socket.WebSocketSession;
 public class ChatMessageHandle extends AbstractMessageHandle<String> {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChatMessageHandle.class);
+
+    public ChatMessageHandle() {
+        super(new TypeToken<Message<String>>() {}.getType());
+    }
+
 
     @Override
     protected void handle(WebSocketSession session, Message<String> message) {
